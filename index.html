@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071321">
+  <meta name="description" content="The Gaza Dilemma. An interactive historical leadership simulation for the StandWithUs UK Explore programme.">
+  <title>The Gaza Dilemma | Explore</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <button class="brand" id="goHome" aria-label="Return to welcome screen">
+        <span class="brandMark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="brandName"><strong>Stand<span>With</span>Us</strong><small>UNITED KINGDOM</small></span>
+        <span class="brandDivider"></span>
+        <span class="explore">EXPLORE<span class="exploreSmall">LEADERSHIP LAB</span></span>
+      </button>
+      <nav class="topnav" aria-label="Game resources">
+        <button class="plainButton" id="howButton"><span class="dotIcon">?</span> How to play</button>
+        <button class="plainButton" id="teacherButton">Educator guide</button>
+        <button class="plainButton" id="sourcesButton">Sources</button>
+        <button class="soundButton" id="restartButton" title="Restart the simulation" hidden>↻ <span>Restart</span></button>
+      </nav>
+    </header>
+    <main id="app" tabindex="-1"></main>
+    <footer class="appFooter"><span>StandWithUs UK · Explore educational simulation</span><span>Historical story ends in May 2023 · No events from the war beginning 7 October 2023</span></footer>
+  </div>
+
+  <dialog id="infoDialog" aria-labelledby="modalTitle">
+    <div class="dialogTop"><div><div class="eyebrow" id="modalEyebrow">EDUCATOR RESOURCES</div><h2 id="modalTitle">Guide</h2></div><button class="closeDialog" id="closeDialog" aria-label="Close">×</button></div>
+    <div id="modalBody" class="modalBody"></div>
+  </dialog>
+
+  <script src="scenarios.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
