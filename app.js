@@ -9,6 +9,13 @@
   const $ = selector => document.querySelector(selector);
   const $$ = selector => Array.from(document.querySelectorAll(selector));
   const safe = val => String(val ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const compact = (val, max=96) => {
+    const text = String(val ?? '').replace(/\s+/g, ' ').trim();
+    if(!text) return '';
+    const first = text.split(/(?<=[.!?])\s+/)[0];
+    const choice = first.length <= max ? first : text;
+    return choice.length <= max ? choice : choice.slice(0, Math.max(0, max - 1)).trimEnd() + '…';
+  };
   let state = { view:'home', route:'quick', name:'', idx:0, selected:null, answers:{}, reflection:'', mapPaused:false };
   const chapters = () => state.route === 'quick' ? EPISODES.filter(x => QUICK_IDS.includes(x.id)) : EPISODES;
   const chapter = () => chapters()[state.idx];
@@ -71,58 +78,60 @@
     return `<section class="homeLayout"><div class="homeCopy">
        <div class="eyebrow"><span class="signalDot"></span> EXPLORE · HISTORICAL DECISION SIMULATION</div>
        <h1>THE <span>GAZA</span><br>DILEMMA<span class="headlineDot">.</span></h1>
-       <p class="homeLead">You are Israel's Prime Minister.<br>The next move is yours.</p>
-       <p class="homeSupport">Enter the security control room. Hear your advisers. Face the decisions that shaped the years from 2005 to May 2023.</p>
+       <p class="homeLead">You are Israel's Prime Minister.<br>Make the call.</p>
+       <p class="homeSupport">Enter the control room. Hear three advisers. Choose a response. Reveal what happened.</p>
        <div class="homeInput"><label for="nameField">YOUR NAME (OPTIONAL)</label><input type="text" maxlength="32" id="nameField" placeholder="Prime Minister" value="${safe(state.name)}" autocomplete="off"></div>
        <div class="modeHeading">CHOOSE YOUR MISSION</div>
-       <div class="modeSwitch"><button type="button" data-route="quick" class="modeChoice ${state.route==='quick'?'selected':''}" aria-pressed="${state.route==='quick'}"><strong>QUICK MISSION</strong><span>6 decisions · Best for a lesson</span></button><button type="button" data-route="full" class="modeChoice ${state.route==='full'?'selected':''}" aria-pressed="${state.route==='full'}"><strong>FULL BRIEFING</strong><span>10 decisions · Deeper story</span></button></div>
+       <div class="modeSwitch"><button type="button" data-route="quick" class="modeChoice ${state.route==='quick'?'selected':''}" aria-pressed="${state.route==='quick'}"><strong>QUICK MISSION</strong><span>6 decisions · Best for class</span></button><button type="button" data-route="full" class="modeChoice ${state.route==='full'?'selected':''}" aria-pressed="${state.route==='full'}"><strong>FULL BRIEFING</strong><span>10 decisions · Full story</span></button></div>
        <button class="startButton" id="startBtn">ENTER CONTROL ROOM <span>→</span></button>
-       <p class="homeDisclaimer">Historical outcomes are fixed. Advisers' dialogue is simulated, not an actual quotation.</p>
-       </div><div class="homeMapWall"><div class="homePanelHeader"><span>STRATEGIC COMMAND / HISTORICAL ARCHIVE</span><strong>2005 → 2023</strong></div>
+       <p class="homeDisclaimer">Historical outcomes are fixed. Adviser dialogue is simulated.</p>
+       </div><div class="homeMapWall"><div class="homePanelHeader"><span>SECURITY CONTROL ROOM / HISTORICAL ARCHIVE</span><strong>2005 → 2023</strong></div>
          ${renderMap({map:'longrange',focus:'Gaza and surrounding region'},{paused:state.mapPaused})}
-         <div class="homeMonitorFooter"><span><i></i> SECURITY</span><span><i></i> CIVILIANS</span><span><i></i> DIPLOMACY</span></div>
-         <div class="homeCaseNote"><span>THE CORE QUESTION</span><p>How do you protect Israelis while limiting civilian harm and deciding when force should stop?</p></div>
+         <div class="homeMonitorFooter"><span><i></i> THREAT</span><span><i></i> RESPONSE</span><span><i></i> DIPLOMACY</span></div>
+         <div class="homeCaseNote"><span>THE CORE QUESTION</span><p>How far should Israel go to stop the threat from Gaza?</p></div>
        </div></section>`;
   }
   function adviserCard(role, person, line, tag, index) {
-    return `<div class="adviserCard"><div class="adviserBadge ${tag}">${tag==='defence'?'DM':tag==='military'?'IDF':'DIP'}</div><div class="adviserText"><div class="adviserName">${safe(person)}</div><div class="adviserRole">${safe(role)}${tag==='diplomacy'?' · Role play':''}</div><p>“${safe(line)}”</p></div><button type="button" class="listenBtn" data-adviser="${index}" aria-label="Listen to ${safe(role)} briefing" title="Listen to briefing"><span aria-hidden="true">▶</span></button></div>`;
+    return `<div class="adviserCard"><div class="adviserBadge ${tag}">${tag==='defence'?'DM':tag==='military'?'IDF':'DIP'}</div><div class="adviserText"><div class="adviserName">${safe(person)}</div><div class="adviserRole">${safe(role)}${tag==='diplomacy'?' · Role play':''}</div><p>${safe(compact(line,88))}</p></div><button type="button" class="listenBtn" data-adviser="${index}" aria-label="Listen to ${safe(role)} briefing" title="Listen to briefing"><span aria-hidden="true">▶</span></button></div>`;
   }
   function adviserHtml(data) {
     const [dName,dWords]=data.defence,[mName,mWords]=data.military,[pName,pWords]=data.diplomacy;
-    return `<section class="advisers"><div class="innerHeading"><span><i class="tinyPulse"></i> YOUR SECURITY CABINET</span><span class="roleplay">SIMULATED ADVICE</span></div>
+    return `<section class="advisers"><div class="innerHeading"><span><i class="tinyPulse"></i> CABINET ADVICE</span><span class="roleplay">SHORT · CLEAR</span></div>
       ${adviserCard('Defence Minister',dName,dWords,'defence',0)}
       ${adviserCard('IDF Chief of Staff',mName,mWords,'military',1)}
       ${adviserCard('Diplomatic Adviser',pName,diplomacyFix(pWords),'diplomacy',2)}
+      <div class="quickSteps"><div><b>1</b><span>Hear the advice</span></div><div><b>2</b><span>Choose a response</span></div><div><b>3</b><span>Reveal history</span></div></div>
       </section>`;
   }
   function diplomacyFix(text){return text;}
   function optionHtml(d) {
-    return `<div class="choiceList" role="group" aria-label="Cabinet decisions">${d.options.map((o,i)=>`<button type="button" class="choice ${state.selected===i?'chosen':''}" data-choice="${i}" aria-pressed="${state.selected===i}"><b>${i+1}</b><span><strong>${safe(o.label)}</strong><small>${safe(o.detail)}</small></span><span class="choiceMark">${state.selected===i?'✓':'›'}</span></button>`).join('')}</div>`;
+    return `<div class="choiceList" role="group" aria-label="Cabinet decisions">${d.options.map((o,i)=>`<button type="button" class="choice ${state.selected===i?'chosen':''}" data-choice="${i}" aria-pressed="${state.selected===i}"><b>${i+1}</b><span><strong>${safe(o.label)}</strong><small>${safe(compact(o.detail,78))}</small></span><span class="choiceMark">${state.selected===i?'✓':'›'}</span></button>`).join('')}</div>`;
   }
   function decisionHtml(d) {
-    return `<div class="decisionView"><div class="questionLabel">THE PRIME MINISTER'S DECISION</div><h2>${safe(d.dilemma)}</h2>${optionHtml(d)}<button id="commitBtn" class="lockButton" ${state.selected===null?'disabled':''}>LOCK IN YOUR DECISION <span>→</span></button><p class="keyboardHint">Select 1, 2 or 3 to choose. Discuss before revealing history.</p></div>`;
+    return `<div class="decisionView"><div class="questionLabel">YOUR DECISION</div><h2>${safe(compact(d.dilemma,92))}</h2><p class="decisionMini">Pick one clear response.</p>${optionHtml(d)}<button id="commitBtn" class="lockButton" ${state.selected===null?'disabled':''}>CONFIRM CHOICE <span>→</span></button><p class="keyboardHint">Tap a button or press 1, 2 or 3.</p></div>`;
   }
   function discussionHtml(d) {
     const chosen=d.options[state.answers[d.id]];
-    return `<div class="discussionView"><div class="questionLabel"><span class="checkRing">✓</span> DECISION RECORDED</div><h2>${safe(chosen.label)}</h2><div class="yourRisk"><span>WHAT YOU MUST CONSIDER</span><p>${safe(chosen.consider)}</p></div><div class="debatePrompt"><span>ASK THE ROOM</span><h3>${safe(d.discuss)}</h3></div><button id="revealBtn" class="lockButton">REVEAL WHAT REALLY HAPPENED <span>→</span></button></div>`;
+    return `<div class="discussionView"><div class="questionLabel"><span class="checkRing">✓</span> CHOICE RECORDED</div><h2>${safe(chosen.label)}</h2><div class="yourRisk"><span>KEY RISK</span><p>${safe(compact(chosen.consider,125))}</p></div><div class="debatePrompt"><span>DISCUSS</span><h3>${safe(compact(d.discuss,120))}</h3></div><button id="revealBtn" class="lockButton">REVEAL HISTORY <span>→</span></button></div>`;
   }
   function revealHtml(d, data) {
-    return `<div class="revealView"><div class="questionLabel"><span class="checkRing">✓</span> HISTORICAL OUTCOME</div><h2>${safe(d.realityTitle)}</h2><p class="revealShort">${safe(data.outcome)}</p><div class="lessonBox"><span>WHAT THIS TELLS US</span><p>${safe(d.takeaway)}</p></div>
-       <details class="moreHistory"><summary>Read more history and sources</summary><p>${safe(d.reality)}</p><div class="sourceLinks">${linkSources(d.sources)}</div></details>
-       <div class="revealNote">Your choice did not change the historical result.</div><button class="lockButton" id="nextBtn">${state.idx===chapters().length-1?'VIEW YOUR FINAL DEBRIEF':'NEXT BRIEFING'} <span>→</span></button></div>`;
+    return `<div class="revealView"><div class="questionLabel"><span class="checkRing">✓</span> WHAT HAPPENED</div><h2>${safe(d.realityTitle)}</h2><p class="revealShort">${safe(compact(data.outcome,160))}</p><div class="lessonBox"><span>TAKEAWAY</span><p>${safe(compact(d.takeaway,130))}</p></div>
+       <details class="moreHistory"><summary>Open more detail and sources</summary><p>${safe(d.reality)}</p><div class="sourceLinks">${linkSources(d.sources)}</div></details>
+       <div class="revealNote">Your choice did not change the historical result.</div><button class="lockButton" id="nextBtn">${state.idx===chapters().length-1?'FINAL DEBRIEF':'NEXT BRIEFING'} <span>→</span></button></div>`;
   }
   function missionHtml() {
     const d=chapter(),data=command(),cs=chapters();
     return `<section class="missionView"><div class="missionStatus"><span class="statusLamp"><i></i> SECURITY CONTROL ROOM</span><span class="pmIdentity">${safe(state.name||'PRIME MINISTER')}</span><span class="chapterCount">BRIEFING ${state.idx+1} / ${cs.length}</span></div>
       ${timeline()}
-      <div class="missionHeading"><div><span class="eyebrow">${safe(d.year)} <span class="slash">/</span> ${safe(d.phase)}</span><h1>${safe(d.title)}</h1><p>${safe(d.subtitle)}</p></div><div class="chapterAlert"><span><i></i> SITUATION REPORT</span><strong>${safe(data.alert)}</strong></div></div>
+      <div class="missionHeading"><div><span class="eyebrow">${safe(d.year)} <span class="slash">/</span> ${safe(d.phase)}</span><h1>${safe(d.title)}</h1><p>${safe(compact(data.brief,110))}</p></div><div class="chapterAlert"><span><i></i> LIVE ALERT</span><strong>${safe(data.alert)}</strong></div></div>
       <div class="controlGrid"><div class="leftWing">
         <section class="monitorPanel"><div class="panelHeader"><span><i class="tinyPulse"></i> SITUATION MAP</span><button type="button" class="mapToggle" id="toggleMap" aria-pressed="${state.mapPaused}">${state.mapPaused?'▶ Play map':'Ⅱ Pause map'}</button></div>${renderMap(data,{paused:state.mapPaused})}</section>
-        <section class="intelPanel"><div class="innerHeading"><span>YOUR INTELLIGENCE</span><span>${safe(d.year)}</span></div><p class="intelHeadline">${safe(data.brief)}</p><div class="intelStrips">${d.intel.map(([label,value])=>`<div><b>${safe(label)}</b><span>${safe(value)}</span></div>`).join('')}</div></section>
-        ${d.image?`<div class="photoNote"><img src="assets/${safe(d.image)}" alt="Historical photograph from the supplied ${safe(d.phase)} reference card"><div><strong>ARCHIVE IMAGE</strong><span>${safe(d.credit)}</span></div></div>`:''}
+        <section class="intelPanel"><div class="innerHeading"><span>FAST BRIEF</span><span>${safe(d.year)}</span></div><p class="intelHeadline">${safe(compact(d.brief,135))}</p><div class="intelStrips">${d.intel.map(([label,value])=>`<div><b>${safe(label)}</b><span>${safe(compact(value,58))}</span></div>`).join('')}</div></section>
+        <section class="decisionPanel">${state.view==='decision'?decisionHtml(d):state.view==='discussion'?discussionHtml(d):revealHtml(d,data)}</section>
+        ${d.image?`<details class="archiveWrap"><summary>Open archive image</summary><div class="photoNote"><img src="assets/${safe(d.image)}" alt="Historical photograph from the supplied ${safe(d.phase)} reference card"><div><strong>ARCHIVE IMAGE</strong><span>${safe(d.credit)}</span></div></div></details>`:''}
       </div>
-      <div class="rightWing">${adviserHtml(data)}<section class="decisionPanel">${state.view==='decision'?decisionHtml(d):state.view==='discussion'?discussionHtml(d):revealHtml(d,data)}</section></div></div>
-      <div class="missionFootnote">Educational reconstruction. Map movements are schematic, not recorded routes or live intelligence. All advisers' recommendations are fictional teaching dialogue.</div>
+      <div class="rightWing">${adviserHtml(data)}</div></div>
+      <div class="missionFootnote">Educational reconstruction. Maps are schematic. Adviser recommendations are fictional teaching dialogue.</div>
     </section>`;
   }
   function finalHtml() {
@@ -179,7 +188,7 @@
   function showModal(type) {
     let title, eyebrow, html;
     if(type==='how'){
-      title='How to play';eyebrow='CONTROL ROOM BRIEFING';html=`<div class="guideText"><div class="guideCallout"><strong>You are the Prime Minister.</strong> The cabinet is waiting for your decision.</div><ol><li>Look at the map and read the short intelligence briefing.</li><li>Read or listen to your three advisers.</li><li>Choose one of three responses and lock it in.</li><li>Discuss your choice. What could go wrong?</li><li>Press <strong>Reveal what really happened</strong>, then continue.</li></ol><p><strong>Quick Mission:</strong> 6 decisions for a shorter lesson. <strong>Full Briefing:</strong> 10 decisions from 2005 to May 2023.</p><p>You can use keys 1, 2 and 3 to select a decision. Maps are schematic and animated, not precise military records. You can pause them. Each speaker button reads the simulated advice aloud using your browser's voice, when supported.</p><div class="guideCallout">There are no right answer scores. The historical outcome is the same whichever option you select. Every adviser's comments are fictional teaching dialogue, not an actual quotation.</div></div>`;
+      title='How to play';eyebrow='CONTROL ROOM BRIEFING';html=`<div class="guideText"><div class="guideCallout"><strong>You are the Prime Minister.</strong> The cabinet is waiting for your decision.</div><ol><li>Check the map and read the short brief.</li><li>Hear the three advisers.</li><li>Pick one of three responses.</li><li>Discuss the risks.</li><li>Press <strong>Reveal history</strong>, then continue.</li></ol><p><strong>Quick Mission:</strong> 6 decisions for a shorter lesson. <strong>Full Briefing:</strong> 10 decisions from 2005 to May 2023.</p><p>You can use keys 1, 2 and 3 to select a decision. Maps are schematic and animated, not precise military records. You can pause them. Each speaker button reads the simulated advice aloud using your browser's voice, when supported.</p><div class="guideCallout">There are no right answer scores. The historical outcome is the same whichever option you select. Every adviser's comments are fictional teaching dialogue, not an actual quotation.</div></div>`;
     } else if(type==='teacher') {
       title='Educator guide';eyebrow='STANDWITHUS UK · EXPLORE';html=`<div class="guideText"><div class="guideCallout"><strong>Main question:</strong> How should Israel protect its citizens from threats originating in Gaza whilst limiting civilian harm and setting clear boundaries for the use of force?</div><h3>Lesson plan</h3><p><strong>5 minutes:</strong> Introduce the 2005 disengagement and the first rocket attacks, which started before 2005.</p><p><strong>15 to 25 minutes:</strong> Run the Quick Mission. Read or play adviser recommendations and ask students to vote.</p><p><strong>5 minutes:</strong> Debrief. Can a successful military operation deliver lasting security?</p><h3>Debrief prompts</h3><ul><li>What is the immediate danger to Israeli civilians?</li><li>What objective would define success?</li><li>What information is still missing?</li><li>How could military action place civilians on either side at risk?</li><li>When might a limited response be preferable to an expanded campaign?</li><li>What would be the political consequences of taking more territory?</li></ul><h3>Historical accuracy</h3><p>Gilad Shalit was captured on <strong>25 June 2006</strong>, not 2005. Hamas won Palestinian legislative elections in 2006 and took control of Gaza after fighting Fatah in June 2007. Rocket attacks predated disengagement and did not rise every single year. The game ends in May 2023, before the 7 October attacks and subsequent war.</p><p>Two original operation cards require corrections: Israeli deaths in 2012 included two soldiers and four civilians, not six soldiers. In 2014, UN figures record 67 Israeli soldiers and six civilians killed in Israel, not 73 soldiers. Palestinian and militant casualty classifications are contested; avoid presenting estimates as unquestioned facts.</p><h3>About the advisers</h3><p>The named Defence Ministers and IDF Chiefs of Staff held their real offices at the times shown. Their opinions and recommendations in the game are <strong>invented teaching dialogue</strong>, not quotations or verified positions. Noa, the diplomatic adviser, is an entirely fictional role play character. Refer to the Sources section for officeholder lists.</p><h3>Humanitarian considerations</h3><p>Hamas authorities seized UN humanitarian supplies in a documented February 2009 incident; they were later returned. Some armed groups have used ordinary materials, including pipes, to produce rockets. These cases do not mean all supplies were diverted. Students should distinguish documented cases from wider claims and consider how civilians depend on essential goods.</p><p>International humanitarian law requires distinction, proportionality and feasible precautions in attack. These duties apply even when the objective is military. The historical reveals include sources and longer explanations for additional context.</p><h3>Original reference cards</h3><div class="archiveCards"><a href="reference_cards/2006_summer_rains.jpg" target="_blank">2006 Summer Rains ↗</a><a href="reference_cards/2008_cast_lead.jpg" target="_blank">2008 Cast Lead ↗</a><a href="reference_cards/2012_pillar_of_defence.jpg" target="_blank">2012 Pillar of Defence ↗</a><a href="reference_cards/2014_protective_edge.jpg" target="_blank">2014 Protective Edge ↗</a></div></div>`;
     } else {

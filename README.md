@@ -17,13 +17,13 @@ Choose Quick Mission (6 chapters) or Full Briefing (10 chapters). Students enter
 
 Suggested GitHub commit message:
 
-`Redesign Gaza Dilemma as immersive cabinet control room`
+`Streamline Gaza Dilemma with control room UI and larger decision buttons`
 
 If using Git from your local repository:
 
 ```bash
 git add index.html style.css scenarios.js cabinet.js app.js assets reference_cards README.md
-git commit -m "Redesign Gaza Dilemma as immersive cabinet control room"
+git commit -m "Streamline Gaza Dilemma with control room UI and larger decision buttons"
 git push origin main
 ```
 
